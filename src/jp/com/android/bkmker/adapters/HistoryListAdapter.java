@@ -22,8 +22,9 @@ public class HistoryListAdapter extends CursorAdapter {
 		TextView mHistoryDate;
 	}
 
-	public HistoryListAdapter(Context context, Cursor c, boolean autoRequery) {
-		super(context, c, autoRequery);
+	public HistoryListAdapter(Context context, Cursor c,
+			int flagRegisterContentObserver) {
+		super(context, c, flagRegisterContentObserver);
 		mInflater = (LayoutInflater) context
 				.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 	}

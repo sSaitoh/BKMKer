@@ -4,6 +4,7 @@ import jp.com.android.bkmker.MainActivity;
 import jp.com.android.bkmker.R;
 import jp.com.android.bkmker.adapters.HistoryListAdapter;
 import android.app.Activity;
+import android.content.ContentResolver;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.provider.Browser;
@@ -11,10 +12,13 @@ import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager.LoaderCallbacks;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.support.v4.widget.CursorAdapter;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
+import android.widget.Toast;
 
 public class HistoryListFragment extends ListFragment implements
 		LoaderCallbacks<Cursor> {
@@ -26,7 +30,7 @@ public class HistoryListFragment extends ListFragment implements
 			Browser.BookmarkColumns.BOOKMARK, Browser.BookmarkColumns.CREATED,
 			Browser.BookmarkColumns.DATE, Browser.BookmarkColumns.FAVICON,
 			Browser.BookmarkColumns.TITLE, Browser.BookmarkColumns.URL,
-			Browser.BookmarkColumns.VISITS };
+			Browser.BookmarkColumns.VISITS, Browser.BookmarkColumns._ID, };
 
 	public static HistoryListFragment newInstance(String title) {
 		HistoryListFragment fragment = new HistoryListFragment();
@@ -48,7 +52,8 @@ public class HistoryListFragment extends ListFragment implements
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 		mHistoryAdapter = new HistoryListAdapter(
-				mActivity.getApplicationContext(), null, true);
+				mActivity.getApplicationContext(), null,
+				CursorAdapter.FLAG_REGISTER_CONTENT_OBSERVER);
 		setListAdapter(mHistoryAdapter);
 		mHistoryAdapter.notifyDataSetChanged();
 		getLoaderManager().initLoader(0, null, this);
@@ -76,15 +81,15 @@ public class HistoryListFragment extends ListFragment implements
 	public Loader<Cursor> onCreateLoader(int arg0, Bundle arg1) {
 		// make selection
 		StringBuilder sb = new StringBuilder();
-		sb.append(Browser.BookmarkColumns.BOOKMARK).append(" =?");
+		sb.append(Browser.BookmarkColumns.BOOKMARK).append(" = 0");
 		String selection = sb.toString();
 
 		// make selectionArgs
 		// 0 = history, 1 = bookmark
 		String[] selectionArgs = new String[] { "0" };
 
-		return new CursorLoader(this.getActivity(), Browser.BOOKMARKS_URI,
-				sProjection, selection, selectionArgs, null);
+		return new CursorLoader(getActivity().getApplicationContext(),
+				Browser.BOOKMARKS_URI, sProjection, selection, null, null);
 	}
 
 	@Override

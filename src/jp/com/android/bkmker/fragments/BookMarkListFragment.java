@@ -17,6 +17,7 @@ import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager.LoaderCallbacks;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.support.v4.widget.CursorAdapter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -32,20 +33,20 @@ public class BookMarkListFragment extends ListFragment implements
 	private BookMarkListAdapter mBookMarkAdapter;
 
 	private static final String[] sProjection = new String[] {
-			Browser.BookmarkColumns.BOOKMARK, Browser.BookmarkColumns.CREATED,
-			Browser.BookmarkColumns.DATE, Browser.BookmarkColumns.FAVICON,
-			Browser.BookmarkColumns.TITLE, Browser.BookmarkColumns.URL,
-			Browser.BookmarkColumns.VISITS };
+			Browser.BookmarkColumns._ID, Browser.BookmarkColumns.BOOKMARK,
+			Browser.BookmarkColumns.CREATED, Browser.BookmarkColumns.DATE,
+			Browser.BookmarkColumns.FAVICON, Browser.BookmarkColumns.TITLE,
+			Browser.BookmarkColumns.URL, Browser.BookmarkColumns.VISITS };
 
 	public static BookMarkListFragment newInstance(String title) {
 		BookMarkListFragment fragment = new BookMarkListFragment();
-		
+
 		Bundle args = new Bundle();
 		args.putString("title", title);
 		fragment.setArguments(args);
 		return fragment;
 	}
-	
+
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
@@ -57,7 +58,8 @@ public class BookMarkListFragment extends ListFragment implements
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 		mBookMarkAdapter = new BookMarkListAdapter(
-				mActivity.getApplicationContext(), null, true);
+				mActivity.getApplicationContext(), null,
+				CursorAdapter.FLAG_REGISTER_CONTENT_OBSERVER);
 		setListAdapter(mBookMarkAdapter);
 		getListView().setOnItemLongClickListener(this);
 		mBookMarkAdapter.notifyDataSetChanged();
@@ -76,7 +78,7 @@ public class BookMarkListFragment extends ListFragment implements
 		super.onDestroyView();
 		getLoaderManager().destroyLoader(0);
 	}
-	
+
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
@@ -86,15 +88,15 @@ public class BookMarkListFragment extends ListFragment implements
 	public Loader<Cursor> onCreateLoader(int id, Bundle bundle) {
 		// make selection
 		StringBuilder sb = new StringBuilder();
-		sb.append(Browser.BookmarkColumns.BOOKMARK).append(" =?");
+		sb.append(Browser.BookmarkColumns.BOOKMARK).append(" = 1");
 		String selection = sb.toString();
 
 		// make selectionArgs
 		// 0 = history, 1 = bookmark
 		String[] selectionArgs = new String[] { "1" };
-		
+
 		return new CursorLoader(this.getActivity(), Browser.BOOKMARKS_URI,
-				sProjection, selection, selectionArgs, null);
+				sProjection, selection, null, null);
 	}
 
 	@Override
@@ -116,8 +118,8 @@ public class BookMarkListFragment extends ListFragment implements
 		if (url != null && !url.equals("")) {
 			Uri uri = Uri.parse(url);
 			Intent i = new Intent(Intent.ACTION_VIEW, uri);
-			i.setClassName("com.android.browser", 
-			                "com.android.browser.BrowserActivity");
+			i.setClassName("com.android.browser",
+					"com.android.browser.BrowserActivity");
 			startActivity(i);
 		}
 		super.onListItemClick(l, v, position, id);
@@ -127,7 +129,7 @@ public class BookMarkListFragment extends ListFragment implements
 	public boolean onItemLongClick(AdapterView<?> parent, View v, int position,
 			long id) {
 		final int pos = position;
-		final CharSequence[] items = {"編集", "削除"};
+		final CharSequence[] items = { "編集", "削除" };
 		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
 		builder.setTitle("ブックマークの操作");
 		builder.setItems(items, new OnClickListener() {
@@ -145,25 +147,28 @@ public class BookMarkListFragment extends ListFragment implements
 		}).show();
 		return false;
 	}
-	
+
 	private void editBookMark(int position) {
 		Cursor c = (Cursor) getListView().getItemAtPosition(position);
 		String title = c.getString(c
 				.getColumnIndexOrThrow(Browser.BookmarkColumns.TITLE));
 		String url = c.getString(c
 				.getColumnIndexOrThrow(Browser.BookmarkColumns.URL));
+		// TODO: 以下の関数はupdateではなくinsertなので変更すること
 		Browser.saveBookmark(getActivity(), title, url);
 	}
-	
+
 	private void deleteBookMark(int position) {
 		Cursor c = (Cursor) getListView().getItemAtPosition(position);
 		int id = c.getInt(c.getColumnIndexOrThrow(Browser.BookmarkColumns._ID));
-		
+
 		final ContentResolver cr = getActivity().getContentResolver();
-		String where = Browser.BookmarkColumns._ID + " =?";
-		String[] selectionArgs = new String[] { String.valueOf(id) };
-		cr.delete(Browser.BOOKMARKS_URI, where, selectionArgs);
-		Toast.makeText(getActivity(), "ブックマークを削除しました", Toast.LENGTH_SHORT).show();
+		String where = Browser.BookmarkColumns._ID + " = " + id;
+		// String[] selectionArgs = new String[] { String.valueOf(id) };
+		cr.delete(Browser.BOOKMARKS_URI, where, null);
+		Toast.makeText(getActivity(), "ブックマークを削除しました", Toast.LENGTH_SHORT)
+				.show();
+		// TODO: cr.deleteを行うと自動更新されないのrequeryを行う
 	}
 
 }

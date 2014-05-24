@@ -22,8 +22,9 @@ public class BookMarkListAdapter extends CursorAdapter {
 		TextView mBookMarkTitle;
 	}
 
-	public BookMarkListAdapter(Context context, Cursor c, boolean b) {
-		super(context, c, b);
+	public BookMarkListAdapter(Context context, Cursor c,
+			int flagRegisterContentObserver) {
+		super(context, c, flagRegisterContentObserver);
 		mInflater = (LayoutInflater) context
 				.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 	}
